@@ -19,8 +19,35 @@ pip install -e ".[torch,metrics]" --no-build-isolation
 tensorboard --logdir ./output/qwen2-7b-instruct-lora/sft
 ```
 
+# 合并lora微调后的模型
+```
+使用merge.sh脚本进行合并，报错
+Traceback (most recent call last):
+  File "/data/miniconda3/envs/llamafactory/bin/llamafactory-cli", line 7, in <module>
+    sys.exit(main())
+  File "/data/workspaces/shiyawei/LLaMA-Factory/src/llamafactory/cli.py", line 151, in main
+    COMMAND_MAP[command]()
+  File "/data/workspaces/shiyawei/LLaMA-Factory/src/llamafactory/train/tuner.py", line 129, in export_model
+    raise ValueError("Cannot merge adapters to a quantized model.")
+ValueError: Cannot merge adapters to a quantized model.
+模型合并失败，请检查错误信息
+
+原因：LLaMA-Factory不允许将LoRA适配器合并到量化模型（AWQ模型）中，LoRA适配器只能合并到原始的全精度模型中。
+```
+
 # 推理环境搭建
 ```
  conda create -n vllm0.11.0 python=3.10
 pip install vllm==0.11.0 --extra-index-url https://download.pytorch.org/whl/cu118
+```
+
+
+# vllm推理微调后的模型
+```
+针对微调awq的模型无法合并的问题，使用vllm推理中的特殊参数：--lora-modules
+```
+
+# 经验
+```
+1. 不要去微调量化的模型，会很麻烦。
 ```
