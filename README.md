@@ -47,6 +47,16 @@ pip install vllm==0.11.0 --extra-index-url https://download.pytorch.org/whl/cu11
 针对微调awq的模型无法合并的问题，使用vllm推理中的特殊参数：--lora-modules
 ```
 
+# 使用gradio界面化体验模型推理性能
+```
+python infer_gradio_show.py
+```
+<img width="1841" height="863" alt="image" src="https://github.com/user-attachments/assets/e1cd814f-ad56-433c-8290-eb9286156140" />
+<img width="1871" height="899" alt="image" src="https://github.com/user-attachments/assets/2ca7301a-b283-4569-95fe-508b262e0af7" />
+<img width="1804" height="892" alt="image" src="https://github.com/user-attachments/assets/536d3e5d-672d-43ec-a731-091bf2eebb1a" />
+
+
+
 # 经验
 ```
 1. 不要去微调量化的模型，会很麻烦。
