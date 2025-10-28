@@ -16,8 +16,10 @@ pip install -e ".[torch,metrics]" --no-build-isolation
 
 # 训练过程中监控指标
 ```
-tensorboard --logdir ./output/qwen2-7b-instruct-lora/sft
+tensorboard --logdir qwen_finetuned_optimized_20251028_162602/runs --host 0.0.0.0 --port 6006
 ```
+<img width="1883" height="894" alt="image" src="https://github.com/user-attachments/assets/22b5a1bf-53e1-4f7c-8a68-ceed2dfedd9e" />
+
 
 # 合并lora微调后的模型
 ```
