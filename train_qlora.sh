@@ -17,11 +17,12 @@ CUDA_VISIBLE_DEVICES=3 llamafactory-cli train \
     --finetuning_type lora \
     --lora_rank 8 \
     --lora_target q_proj,v_proj \
-    --per_device_train_batch_size 4 \
-    --gradient_accumulation_steps 2 \
+    --per_device_train_batch_size 1 \
+    --gradient_accumulation_steps 8 \
     --learning_rate 2e-4 \
-    --num_train_epochs 2 \
+    --num_train_epochs 3 \
     --quantization_bit 4 \
+    --gradient_checkpointing true \
     --fp16 \
     --do_train true \
     --do_eval true \
@@ -30,7 +31,7 @@ CUDA_VISIBLE_DEVICES=3 llamafactory-cli train \
     --eval_dataset output_instruction_dev \
     --predict_with_generate true \
     --max_new_tokens 256 \
-    --per_device_eval_batch_size 8 \
+    --per_device_eval_batch_size 4 \
     --metric_for_best_model eval_bleu-4 \
     --logging_steps 10 \
     --save_steps 200 \

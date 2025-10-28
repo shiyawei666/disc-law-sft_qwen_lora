@@ -1,0 +1,14 @@
+{
+  "output_instruction_train": {
+    "file_name": "output_instruction_train.jsonl",
+    "formatting": "alpaca"
+  },
+  "output_instruction_dev": {
+    "file_name": "output_instruction_dev.jsonl",
+    "formatting": "alpaca"
+  },
+  "output_instruction_test": {
+    "file_name": "output_instruction_test.jsonl",
+    "formatting": "alpaca"
+  }
+}
