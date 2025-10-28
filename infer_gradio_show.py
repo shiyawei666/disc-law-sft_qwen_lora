@@ -224,166 +224,272 @@ def generate_text_compare(prompt_text, temp, tokens):
     return result_before, result_after
 
 
-# 创建高级界面
-with gr.Blocks(theme=gr.themes.Monochrome(),
-               title="模型微调对比系统") as advanced_demo:
-    gr.Markdown("""
-    # 🤖 模型微调对比系统
+# 使用更美观的主题创建界面
+theme = gr.themes.Soft(
+    primary_hue="blue",
+    secondary_hue="gray",
+).set(
+    body_background_fill='linear-gradient(180deg, #f5f7fa 0%, #e4e8f0 100%)',
+    block_background_fill='rgba(255, 255, 255, 0.9)',
+    block_border_width='1px',
+    block_border_color='rgba(0,0,0,0.1)',
+    block_shadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    button_primary_background_fill='linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+    button_primary_border_color='#667eea',
+    button_primary_text_color='white',
+)
 
-    **对比微调前后模型的性能差异**
+with gr.Blocks(theme=theme, title="模型微调对比系统") as advanced_demo:
+    gr.Markdown("""
+    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">
+        <h1 style="margin: 0; font-size: 2.5em;">🤖 模型微调对比系统</h1>
+        <p style="font-size: 1.2em; opacity: 0.9;">对比微调前后模型的性能差异</p>
+    </div>
     """)
 
-    with gr.Tab("🔄 实时对比模式"):
-        with gr.Row():
+    with gr.Tab("🔄 实时对比模式", id="compare_tab"):
+        with gr.Row(equal_height=False):
             with gr.Column(scale=1):
-                gr.Markdown("### 参数配置")
-                temperature = gr.Slider(0.1, 2.0, value=0.7, label="创造性")
-                max_tokens = gr.Slider(100, 2000, value=800, label="生成长度")
-                top_p = gr.Slider(0.1, 1.0, value=0.9, label="Top-P")
-
-                # 模型信息展示
-                gr.Markdown("### 📋 模型信息")
                 with gr.Group():
-                    gr.Markdown(f"**{MODEL_NAMES['before']['display_name']}**")
-                    gr.Markdown(MODEL_NAMES['before']['server_info'])
-                    gr.Markdown(MODEL_NAMES['before']['model_info'])
+                    gr.Markdown("### ⚙️ 参数配置")
+                    temperature = gr.Slider(0.1, 2.0, value=0.7,
+                                            label="创造性",
+                                            info="值越高，回答越有创造性")
+                    max_tokens = gr.Slider(100, 2000, value=800, step=100,
+                                           label="生成长度",
+                                           info="生成文本的最大长度")
+                    top_p = gr.Slider(0.1, 1.0, value=0.9, label="Top-P",
+                                      info="核采样参数")
 
-                    gr.Markdown("---")
+                with gr.Group():
+                    gr.Markdown("### 📋 模型信息")
+                    with gr.Accordion(MODEL_NAMES['before']['display_name'],
+                                      open=True):
+                        gr.Markdown(f"""
+                        **服务信息**  
+                        {MODEL_NAMES['before']['server_info']}  
+                        {MODEL_NAMES['before']['model_info']}
+                        """)
 
-                    gr.Markdown(f"**{MODEL_NAMES['after']['display_name']}**")
-                    gr.Markdown(MODEL_NAMES['after']['server_info'])
-                    gr.Markdown(MODEL_NAMES['after']['model_info'])
+                    with gr.Accordion(MODEL_NAMES['after']['display_name'],
+                                      open=True):
+                        gr.Markdown(f"""
+                        **服务信息**  
+                        {MODEL_NAMES['after']['server_info']}  
+                        {MODEL_NAMES['after']['model_info']}
+                        """)
 
             with gr.Column(scale=2):
-                gr.Markdown(f"### {MODEL_NAMES['before']['display_name']}")
-                chatbot_before = gr.Chatbot(
-                    label=f"{MODEL_NAMES['before']['display_name']} - {MODEL_NAMES['before']['model_info']}",
-                    height=400,
-                    type="messages",
-                    show_copy_button=True
-                )
+                with gr.Group():
+                    gr.Markdown(f"### {MODEL_NAMES['before']['display_name']}")
+                    chatbot_before = gr.Chatbot(
+                        label=f"{MODEL_NAMES['before']['model_info']}",
+                        height=400,
+                        type="messages",
+                        show_copy_button=True,
+                        avatar_images=(None,
+                                       "https://api.dicebear.com/7.x/bottts/svg?seed=before")
+                    )
 
             with gr.Column(scale=2):
-                gr.Markdown(f"### {MODEL_NAMES['after']['display_name']}")
-                chatbot_after = gr.Chatbot(
-                    label=f"{MODEL_NAMES['after']['display_name']} - {MODEL_NAMES['after']['model_info']}",
-                    height=400,
-                    type="messages",
-                    show_copy_button=True
-                )
+                with gr.Group():
+                    gr.Markdown(f"### {MODEL_NAMES['after']['display_name']}")
+                    chatbot_after = gr.Chatbot(
+                        label=f"{MODEL_NAMES['after']['model_info']}",
+                        height=400,
+                        type="messages",
+                        show_copy_button=True,
+                        avatar_images=(None,
+                                       "https://api.dicebear.com/7.x/bottts/svg?seed=after")
+                    )
 
         with gr.Row():
             msg_compare = gr.Textbox(
-                label="输入消息",
+                label="💬 输入消息",
                 placeholder="输入问题，同时对比两个模型的回答...",
-                scale=4
+                scale=4,
+                lines=2
             )
-            send_compare_btn = gr.Button("发送对比", scale=1,
-                                         variant="primary")
-
-    with gr.Tab("📊 独立测试模式"):
-        with gr.Row():
             with gr.Column(scale=1):
-                gr.Markdown("### 参数配置")
-                temp_single = gr.Slider(0.1, 2.0, value=0.7, label="创造性")
-                max_tokens_single = gr.Slider(100, 2000, value=800,
-                                              label="生成长度")
-                model_choice = gr.Radio(
-                    choices=[
-                        f"{MODEL_NAMES['before']['display_name']} ({MODEL_NAMES['before']['model_info']})",
-                        f"{MODEL_NAMES['after']['display_name']} ({MODEL_NAMES['after']['model_info']})"
-                    ],
-                    label="选择测试模型",
-                    value=f"{MODEL_NAMES['before']['display_name']} ({MODEL_NAMES['before']['model_info']})"
-                )
-                clear_single_btn = gr.Button("清空对话", variant="secondary")
+                send_compare_btn = gr.Button("🚀 发送对比", size="lg",
+                                             variant="primary")
+                clear_compare_btn = gr.Button("🗑️ 清空对话", size="lg")
 
-                # 当前选中模型信息
-                gr.Markdown("### 🔍 当前模型信息")
-                model_info_display = gr.Markdown()
+    with gr.Tab("📊 独立测试模式", id="single_tab"):
+        with gr.Row(equal_height=False):
+            with gr.Column(scale=1):
+                with gr.Group():
+                    gr.Markdown("### ⚙️ 参数配置")
+                    temp_single = gr.Slider(0.1, 2.0, value=0.7,
+                                            label="创造性",
+                                            info="值越高，回答越有创造性")
+                    max_tokens_single = gr.Slider(100, 2000, value=800,
+                                                  step=100, label="生成长度",
+                                                  info="生成文本的最大长度")
+
+                    model_choice = gr.Radio(
+                        choices=[
+                            f"{MODEL_NAMES['before']['display_name']}",
+                            f"{MODEL_NAMES['after']['display_name']}"
+                        ],
+                        label="🎯 选择测试模型",
+                        value=f"{MODEL_NAMES['before']['display_name']}",
+                        info="选择要测试的模型版本"
+                    )
+
+                    with gr.Row():
+                        clear_single_btn = gr.Button("🗑️ 清空对话",
+                                                     variant="secondary")
+                        clear_all_btn = gr.Button("💫 重置参数",
+                                                  variant="secondary")
+
+                with gr.Group():
+                    gr.Markdown("### 🔍 当前模型信息")
+                    model_info_display = gr.Markdown()
 
             with gr.Column(scale=2):
-                chatbot_single = gr.Chatbot(
-                    label="对话历史",
-                    height=500,
-                    type="messages",
-                    show_copy_button=True
-                )
+                with gr.Group():
+                    chatbot_single = gr.Chatbot(
+                        label="💭 对话历史",
+                        height=500,
+                        type="messages",
+                        show_copy_button=True,
+                        avatar_images=(
+                        "https://api.dicebear.com/7.x/personas/svg?seed=user",
+                        "https://api.dicebear.com/7.x/bottts/svg?seed=bot")
+                    )
 
         with gr.Row():
             msg_single = gr.Textbox(
-                label="输入消息",
+                label="💬 输入消息",
                 placeholder="与选定模型对话...",
-                scale=4
+                scale=4,
+                lines=2
             )
-            send_single_btn = gr.Button("发送", scale=1, variant="primary")
-
-    with gr.Tab("📝 文本生成对比"):
-        with gr.Row():
             with gr.Column(scale=1):
-                gr.Markdown("### 生成参数")
-                temp_gen = gr.Slider(0.1, 2.0, value=0.7, label="创造性")
-                max_tokens_gen = gr.Slider(100, 2000, value=800,
-                                           label="生成长度")
-                generate_compare_btn = gr.Button("生成对比", variant="primary")
+                send_single_btn = gr.Button("🚀 发送", size="lg",
+                                            variant="primary")
 
-                # 模型信息
-                gr.Markdown("### 📋 对比模型")
+    with gr.Tab("📝 文本生成对比", id="generate_tab"):
+        with gr.Row(equal_height=False):
+            with gr.Column(scale=1):
                 with gr.Group():
-                    gr.Markdown(f"**{MODEL_NAMES['before']['display_name']}**")
-                    gr.Markdown(MODEL_NAMES['before']['server_info'])
-                    gr.Markdown(MODEL_NAMES['before']['model_info'])
+                    gr.Markdown("### ⚙️ 生成参数")
+                    temp_gen = gr.Slider(0.1, 2.0, value=0.7, label="创造性",
+                                         info="值越高，文本越有创造性")
+                    max_tokens_gen = gr.Slider(100, 2000, value=800, step=100,
+                                               label="生成长度",
+                                               info="生成文本的最大长度")
 
-                    gr.Markdown("---")
+                    with gr.Row():
+                        generate_compare_btn = gr.Button("🎨 生成对比",
+                                                         variant="primary",
+                                                         size="lg")
+                        clear_gen_btn = gr.Button("🗑️ 清空所有",
+                                                  variant="secondary",
+                                                  size="lg")
 
-                    gr.Markdown(f"**{MODEL_NAMES['after']['display_name']}**")
-                    gr.Markdown(MODEL_NAMES['after']['server_info'])
-                    gr.Markdown(MODEL_NAMES['after']['model_info'])
+                with gr.Group():
+                    gr.Markdown("### 📋 对比模型")
+                    with gr.Accordion("模型详情", open=True):
+                        gr.Markdown(f"""
+                        **{MODEL_NAMES['before']['display_name']}**  
+                        {MODEL_NAMES['before']['server_info']}  
+                        {MODEL_NAMES['before']['model_info']}
+
+                        ---
+
+                        **{MODEL_NAMES['after']['display_name']}**  
+                        {MODEL_NAMES['after']['server_info']}  
+                        {MODEL_NAMES['after']['model_info']}
+                        """)
 
             with gr.Column(scale=1):
-                prompt_compare = gr.Textbox(
-                    label="输入提示词",
-                    placeholder="描述您想要生成的内容...",
-                    lines=5
-                )
+                with gr.Group():
+                    prompt_compare = gr.Textbox(
+                        label="📝 输入提示词",
+                        placeholder="描述您想要生成的内容...",
+                        lines=8,
+                        info="输入详细的提示词以获得更好的生成效果"
+                    )
 
-        with gr.Row():
+        with gr.Row(equal_height=True):
             with gr.Column(scale=1):
-                gr.Markdown(f"### {MODEL_NAMES['before']['display_name']}")
-                generated_before = gr.Textbox(
-                    label=f"{MODEL_NAMES['before']['model_info']}",
-                    lines=8,
-                    show_copy_button=True
-                )
+                with gr.Group():
+                    gr.Markdown(f"### {MODEL_NAMES['before']['display_name']}")
+                    generated_before = gr.Textbox(
+                        label="📄 生成结果",
+                        lines=10,
+                        show_copy_button=True,
+                        max_lines=20
+                    )
 
             with gr.Column(scale=1):
-                gr.Markdown(f"### {MODEL_NAMES['after']['display_name']}")
-                generated_after = gr.Textbox(
-                    label=f"{MODEL_NAMES['after']['model_info']}",
-                    lines=8,
-                    show_copy_button=True
-                )
-
-        clear_gen_btn = gr.Button("清空所有", variant="secondary")
+                with gr.Group():
+                    gr.Markdown(f"### {MODEL_NAMES['after']['display_name']}")
+                    generated_after = gr.Textbox(
+                        label="📄 生成结果",
+                        lines=10,
+                        show_copy_button=True,
+                        max_lines=20
+                    )
 
 
     # 更新模型信息显示的函数
     def update_model_info(choice):
         if "微调前模型" in choice:
             return f"""
-            **当前选中模型信息:**
-            - {MODEL_NAMES['before']['display_name']}
-            - {MODEL_NAMES['before']['server_info']}
-            - {MODEL_NAMES['before']['model_info']}
+            **当前选中模型信息:**  
+            🎯 **{MODEL_NAMES['before']['display_name']}**  
+            🌐 {MODEL_NAMES['before']['server_info']}  
+            🤖 {MODEL_NAMES['before']['model_info']}  
+
+            *此模型为原始版本，用于对比基准测试*
             """
         else:
             return f"""
-            **当前选中模型信息:**
-            - {MODEL_NAMES['after']['display_name']}
-            - {MODEL_NAMES['after']['server_info']}
-            - {MODEL_NAMES['after']['model_info']}
+            **当前选中模型信息:**  
+            🚀 **{MODEL_NAMES['after']['display_name']}**  
+            🌐 {MODEL_NAMES['after']['server_info']}  
+            🤖 {MODEL_NAMES['after']['model_info']}  
+
+            *此模型为优化版本，包含最新的微调改进*
             """
 
+
+    # 清空对比模式对话
+    def clear_compare_chat():
+        return [], [], ""
+
+
+    clear_compare_btn.click(
+        fn=clear_compare_chat,
+        outputs=[chatbot_before, chatbot_after, msg_compare]
+    )
+
+
+    # 重置参数
+    def reset_params():
+        return 0.7, 800
+
+
+    clear_all_btn.click(
+        fn=reset_params,
+        outputs=[temp_single, max_tokens_single]
+    )
+
+    # 绑定模型选择变化事件
+    model_choice.change(
+        fn=update_model_info,
+        inputs=model_choice,
+        outputs=model_info_display
+    )
+
+    # 初始化模型信息显示
+    advanced_demo.load(
+        fn=lambda: update_model_info(model_choice.value),
+        outputs=model_info_display
+    )
 
     # 事件处理 - 实时对比模式
     send_compare_btn.click(
@@ -398,19 +504,6 @@ with gr.Blocks(theme=gr.themes.Monochrome(),
     def get_single_model_type(choice):
         return "before" if "微调前模型" in choice else "after"
 
-
-    # 绑定模型选择变化事件
-    model_choice.change(
-        fn=update_model_info,
-        inputs=model_choice,
-        outputs=model_info_display
-    )
-
-    # 初始化模型信息显示
-    advanced_demo.load(
-        fn=lambda: update_model_info(model_choice.value),
-        outputs=model_info_display
-    )
 
     send_single_btn.click(
         fn=stream_chat_single,
@@ -435,7 +528,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(),
 
     # 清空文本生成对比
     def clear_all():
-        return "", "", "", ""
+        return "", "", ""
 
 
     clear_gen_btn.click(
@@ -446,30 +539,39 @@ with gr.Blocks(theme=gr.themes.Monochrome(),
     # 添加一些使用说明
     with gr.Accordion("📖 使用说明", open=False):
         gr.Markdown(f"""
-        ## 使用指南
+        ## 🎯 使用指南
 
         ### 🔄 实时对比模式
-        - 同时向微调前后的两个模型发送相同的问题
-        - 实时观察两个模型的响应差异
-        - 适合快速比较模型性能
+        - **功能**: 同时向微调前后的两个模型发送相同的问题
+        - **优势**: 实时观察两个模型的响应差异，适合快速比较模型性能
+        - **使用技巧**: 使用相同的参数设置，确保对比的公平性
 
         ### 📊 独立测试模式  
-        - 单独测试某个模型的性能
-        - 可以更深入地了解特定模型的行为
-        - 适合详细的功能测试
+        - **功能**: 单独测试某个模型的性能
+        - **优势**: 可以更深入地了解特定模型的行为，适合详细的功能测试
+        - **使用技巧**: 可以调整不同参数来测试模型的稳定性
 
         ### 📝 文本生成对比
-        - 对比两个模型在文本生成任务上的表现
-        - 适合创意写作、内容生成等场景
+        - **功能**: 对比两个模型在文本生成任务上的表现
+        - **优势**: 适合创意写作、内容生成、代码编写等场景
+        - **使用技巧**: 提供详细的提示词以获得更好的生成效果
 
-        ## 模型信息
-        - **{MODEL_NAMES['before']['display_name']}**: 
-          - {MODEL_NAMES['before']['server_info']}
-          - {MODEL_NAMES['before']['model_info']}
+        ## 🤖 模型信息
 
-        - **{MODEL_NAMES['after']['display_name']}**: 
-          - {MODEL_NAMES['after']['server_info']}
-          - {MODEL_NAMES['after']['model_info']}
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 8px; color: white;">
+        <h3 style="color: white;">{MODEL_NAMES['before']['display_name']}</h3>
+        <p>{MODEL_NAMES['before']['server_info']}<br>{MODEL_NAMES['before']['model_info']}</p>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 8px; color: white; margin-top: 10px;">
+        <h3 style="color: white;">{MODEL_NAMES['after']['display_name']}</h3>
+        <p>{MODEL_NAMES['after']['server_info']}<br>{MODEL_NAMES['after']['model_info']}</p>
+        </div>
+
+        ## 💡 提示
+        - 使用 **创造性** 参数控制回答的随机性
+        - **生成长度** 影响生成文本的最大长度
+        - 在对比模式下，确保网络连接稳定以获得最佳体验
         """)
 
 if __name__ == "__main__":
